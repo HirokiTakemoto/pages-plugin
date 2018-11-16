@@ -138,6 +138,13 @@ class Index extends Controller
 
         Flash::success(Lang::get($successMessage));
 
+        $class = $this->resolveTypeClassName($type);
+        /*
+         * Extensibility
+         */
+        Event::fire('pages.object.savedb', [$this->theme, $class, $object, $type]);
+        $this->fireEvent('object.savedb', [$class, $object, $type]);
+
         return $result;
     }
 
@@ -184,6 +191,12 @@ class Index extends Controller
 
         $deletedObjects = $this->loadObject($type, trim(Request::input('objectPath')))->delete();
 
+        /*
+         * Extensibility
+         */
+        Event::fire('pages.object.afterdelete', [$this->theme, $type, $deletedObjects]);
+        $this->fireEvent('object.afterdelete', [$type, $deletedObjects]);
+
         $result = [
             'deletedObjects' => $deletedObjects,
             'theme' => $this->theme->getDirName()
@@ -228,6 +241,12 @@ class Index extends Controller
         catch (Exception $ex) {
             $error = $ex->getMessage();
         }
+
+        /*
+         * Extensibility
+         */
+        Event::fire('pages.object.afterdelete', [$this->theme, $type, $deleted]);
+        $this->fireEvent('object.afterdelete', [$type, $deleted]);
 
         return [
             'deleted' => $deleted,
@@ -343,6 +362,12 @@ class Index extends Controller
     {
         $class = $this->resolveTypeClassName($type);
 
+        /*
+         * Extensibility
+         */
+        Event::fire('pages.object.beforeload', [$this->theme, $class, $type, $path]);
+        $this->fireEvent('object.beforeload', [$class, $type, $path]);
+        
         if (!($object = call_user_func(array($class, 'load'), $this->theme, $path))) {
             if (!$ignoreNotFound) {
                 throw new ApplicationException(trans('rainlab.pages::lang.object.not_found'));
